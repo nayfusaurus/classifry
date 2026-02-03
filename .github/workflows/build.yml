@@ -26,10 +26,10 @@ jobs:
             **/*requirements*.txt
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --dev
 
-      - name: Install dependencies
-        run: uv add --dev bandit
+      - name: Run tests
+        run: uv run pytest tests/ -v
 
-      - name: Run Bandit scan
-        run: bandit classifier.py
+      - name: Run Bandit security scan
+        run: uv run bandit -r . --exclude tests,docs -q
