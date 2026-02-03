@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Email - Email Classifier{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Upload Email for Review</h2>
+
+    {% if not model_available %}
+    <div class="flash error" style="margin-bottom: 15px;">
+        <strong>Note:</strong> No trained model found. Classification will not be available until you train a model using:
+        <code>uv run python classifier.py train</code>
+    </div>
+    {% endif %}
+
+    <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+        <p>Select an email file (.eml, .txt, or raw email format) to analyze:</p>
+        <input type="file" name="email_file" accept=".eml,.txt,.msg" required>
+        <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>How It Works</h2>
+    <ol style="margin-left: 20px;">
+        <li style="margin-bottom: 10px;"><strong>Upload:</strong> Select an email file to analyze</li>
+        <li style="margin-bottom: 10px;"><strong>Review:</strong> See the email in three views:
+            <ul style="margin-top: 5px; margin-left: 20px;">
+                <li><em>Rendered View</em> - Safe HTML preview (scripts disabled)</li>
+                <li><em>Underlying Content</em> - URLs, hidden text, suspicious elements</li>
+                <li><em>Classifier View</em> - What the model sees (cleaned text)</li>
+            </ul>
+        </li>
+        <li style="margin-bottom: 10px;"><strong>Classify:</strong> See the model's prediction with confidence score</li>
+        <li style="margin-bottom: 10px;"><strong>Label:</strong> Mark as spam or ham to add to training data</li>
+    </ol>
+</div>
+
+<div class="card">
+    <h2>Dataset Statistics</h2>
+    <p>Current training data:</p>
+    <ul style="margin-left: 20px; margin-top: 10px;">
+        <li>Ham emails: <strong id="ham-count">--</strong></li>
+        <li>Spam emails: <strong id="spam-count">--</strong></li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Simple count of files in dataset directories (displayed on load)
+    // This would ideally be done server-side, but keeping JS minimal
+    document.addEventListener('DOMContentLoaded', function() {
+        // Placeholder - in a real app, fetch these counts from the server
+        // For now, just showing static placeholder
+        document.getElementById('ham-count').textContent = 'Check email-data-set/ham/';
+        document.getElementById('spam-count').textContent = 'Check email-data-set/spam/';
+    });
+</script>
+{% endblock %}

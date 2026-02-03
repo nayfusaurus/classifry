@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Review Email - Email Classifier{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Classification Result</h2>
+
+    {% if classification.prediction == 'SPAM' %}
+    <div class="prediction-box prediction-spam">
+        <div class="prediction-label">SPAM</div>
+        <p>Spam probability: {{ "%.1f"|format(classification.spam_probability * 100) }}%</p>
+        <div class="confidence-bar">
+            <div class="confidence-fill" style="width: {{ classification.spam_probability * 100 }}%; background-color: #dc3545;"></div>
+        </div>
+    </div>
+    {% elif classification.prediction == 'HAM' %}
+    <div class="prediction-box prediction-ham">
+        <div class="prediction-label">HAM (Legitimate)</div>
+        <p>Spam probability: {{ "%.1f"|format(classification.spam_probability * 100) }}%</p>
+        <div class="confidence-bar">
+            <div class="confidence-fill" style="width: {{ (1 - classification.spam_probability) * 100 }}%; background-color: #28a745;"></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="prediction-box prediction-unknown">
+        <div class="prediction-label">UNKNOWN</div>
+        <p>{{ classification.get('error', 'Could not classify email') }}</p>
+    </div>
+    {% endif %}
+
+    <p style="text-align: center; color: #666;">
+        Confidence: {{ "%.1f"|format(classification.confidence * 100) }}%
+    </p>
+</div>
+
+<div class="card">
+    <h2>Email Subject</h2>
+    <p style="font-size: 1.1rem; font-weight: 500;">
+        {{ subject if subject else '(no subject)' }}
+    </p>
+    <p style="color: #666; font-size: 0.9rem;">
+        Original file: {{ original_filename }}
+    </p>
+</div>
+
+<div class="card">
+    <h2>Email Content Views</h2>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('rendered')">Rendered View</button>
+        <button class="tab" onclick="showTab('underlying')">Underlying Content</button>
+        <button class="tab" onclick="showTab('classifier')">Classifier View</button>
+    </div>
+
+    <div id="rendered" class="tab-content active">
+        <p style="margin-bottom: 10px; color: #666; font-size: 0.9rem;">
+            Safe HTML preview (scripts and forms disabled, links non-clickable):
+        </p>
+        <div class="email-view">
+            {{ rendered_view|safe }}
+        </div>
+    </div>
+
+    <div id="underlying" class="tab-content">
+        <p style="margin-bottom: 15px; color: #666; font-size: 0.9rem;">
+            Analysis of underlying content for security review:
+        </p>
+
+        {% if underlying.link_mismatches %}
+        <h3 style="color: #dc3545; margin-bottom: 10px;">Link Mismatches (Suspicious!)</h3>
+        <div style="margin-bottom: 20px;">
+            {% for mismatch in underlying.link_mismatches %}
+            <div class="mismatch-item">
+                <strong>Display text shows:</strong> {{ mismatch.display }}
+                <br>
+                <strong>Actually links to:</strong> {{ mismatch.actual }}
+                <br>
+                <small style="color: #666;">
+                    Display domain: {{ mismatch.display_domain }} vs Actual domain: {{ mismatch.actual_domain }}
+                </small>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if underlying.hidden_text %}
+        <h3 style="color: #ffc107; margin-bottom: 10px;">Hidden Text Detected</h3>
+        <ul class="warning-list" style="margin-bottom: 20px;">
+            {% for item in underlying.hidden_text %}
+            <li>
+                <strong>Hidden by:</strong> {{ item.reason }}<br>
+                <em>Text:</em> {{ item.text }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if underlying.suspicious_elements %}
+        <h3 style="color: #ffc107; margin-bottom: 10px;">Suspicious Elements</h3>
+        <ul class="warning-list" style="margin-bottom: 20px;">
+            {% for element in underlying.suspicious_elements %}
+            <li>{{ element }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if underlying.form_actions %}
+        <h3 style="margin-bottom: 10px;">Form Actions</h3>
+        <ul class="url-list" style="margin-bottom: 20px;">
+            {% for action in underlying.form_actions %}
+            <li>{{ action }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h3 style="margin-bottom: 10px;">All URLs Found ({{ underlying.urls|length }})</h3>
+        {% if underlying.urls %}
+        <ul class="url-list">
+            {% for url in underlying.urls %}
+            <li>{{ url }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="color: #666;">No URLs found in email.</p>
+        {% endif %}
+
+        {% if not underlying.link_mismatches and not underlying.hidden_text and not underlying.suspicious_elements %}
+        <div style="padding: 15px; background-color: #d4edda; border-radius: 6px; margin-top: 15px;">
+            No suspicious elements detected in this email.
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="classifier" class="tab-content">
+        <p style="margin-bottom: 10px; color: #666; font-size: 0.9rem;">
+            Cleaned and preprocessed text (what the model sees):
+        </p>
+        <pre>{{ classifier_view }}</pre>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Label This Email</h2>
+    <p style="margin-bottom: 15px;">
+        Add this email to the training dataset by labeling it:
+    </p>
+
+    <form action="{{ url_for('label') }}" method="post">
+        <input type="hidden" name="email_content" value="{{ raw_body }}">
+
+        <div class="label-buttons">
+            <button type="submit" name="label" value="ham" class="btn btn-success">
+                Mark as HAM (Legitimate)
+            </button>
+            <button type="submit" name="label" value="spam" class="btn btn-danger">
+                Mark as SPAM
+            </button>
+        </div>
+    </form>
+
+    <p style="margin-top: 15px; text-align: center;">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Upload Another Email</a>
+    </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function showTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(function(content) {
+            content.classList.remove('active');
+        });
+
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab').forEach(function(tab) {
+            tab.classList.remove('active');
+        });
+
+        // Show selected tab content
+        document.getElementById(tabName).classList.add('active');
+
+        // Add active class to clicked tab
+        event.target.classList.add('active');
+    }
+</script>
+{% endblock %}
