@@ -9,6 +9,9 @@ A neural network-based email spam classifier built with PyTorch. This project in
 - Interactive Jupyter notebook with detailed explanations
 - Command-line interface for training and classification
 - GPU support (CUDA) for faster training
+- Web interface for reviewing and labeling emails
+- Three-panel email analysis (rendered HTML, underlying source, classifier prediction)
+- Contribute to training dataset through manual labeling
 
 ## Requirements
 
@@ -62,6 +65,42 @@ uv run python classifier.py interactive
 ```
 
 Enter email text and get instant classification results.
+
+## Web Application
+
+The web application provides a visual interface for reviewing emails and contributing labels to the training dataset.
+
+### Starting the Server
+
+```bash
+uv run python app.py
+```
+
+The server starts on `http://localhost:5000` by default.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FLASK_SECRET_KEY` | (random) | Secret key for session management |
+| `FLASK_DEBUG` | `False` | Enable debug mode for development |
+
+Set environment variables before starting:
+```bash
+export FLASK_SECRET_KEY="your-secret-key"
+export FLASK_DEBUG=True
+uv run python app.py
+```
+
+### Workflow
+
+1. **Browse** - Navigate through emails in the dataset
+2. **Review** - View emails in three panels:
+   - **Rendered**: HTML content displayed as it would appear in an email client
+   - **Underlying**: Raw email source with headers and body
+   - **Classifier**: Model prediction with spam probability
+3. **Label** - Mark emails as spam or ham to contribute to the training dataset
+4. **Train** - Re-train the model with newly labeled data
 
 ## Learning with the Notebook
 
@@ -127,8 +166,13 @@ uv run python classifier.py interactive [OPTIONS]
 spam-or-ham-classifier/
 ├── pyproject.toml                  # Project dependencies (uv)
 ├── classifier.py                   # Command-line tool
+├── app.py                          # Flask web application
 ├── spam_classifier_tutorial.ipynb  # Educational notebook
 ├── README.md                       # This file
+├── templates/                      # Jinja2 HTML templates
+│   └── *.html                      # Web interface templates
+├── tests/                          # Test suite
+│   └── test_*.py                   # Pytest test modules
 ├── models/                         # Saved models (generated)
 │   ├── spam_classifier.pth         # PyTorch model weights
 │   └── tfidf_vectorizer.pkl        # TF-IDF vectorizer
@@ -204,6 +248,27 @@ Edit `classifier.py` to modify:
 - `SpamClassifier` class for architecture changes
 - `clean_text()` function for preprocessing changes
 - TF-IDF parameters in `train_model()` function
+
+## Running Tests
+
+Run the test suite with pytest:
+
+```bash
+uv run pytest
+```
+
+For verbose output:
+
+```bash
+uv run pytest -v
+```
+
+### Test Coverage
+
+The tests cover:
+
+- **Web Application** (`test_app.py`): Flask routes, email rendering, labeling functionality
+- **Classifier** (`test_classifier.py`): Text preprocessing, model training, classification accuracy
 
 ## Troubleshooting
 
