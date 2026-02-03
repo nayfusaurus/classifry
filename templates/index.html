@@ -14,6 +14,7 @@
     {% endif %}
 
     <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <p>Select an email file (.eml, .txt, or raw email format) to analyze:</p>
         <input type="file" name="email_file" accept=".eml,.txt,.msg" required>
         <button type="submit" class="btn btn-primary">Upload and Analyze</button>

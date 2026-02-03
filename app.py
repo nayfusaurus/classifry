@@ -7,8 +7,9 @@ and labeling emails for dataset expansion.
 """
 
 import hashlib
-import io
+import os
 import re
+import secrets
 import tempfile
 import time
 from pathlib import Path
@@ -16,12 +17,16 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Comment
-from flask import Flask, flash, redirect, render_template, request, url_for
+from flask import Flask, flash, redirect, render_template, request, session, url_for
 
 from classifier import EmailClassifier, clean_text, parse_email_file
 
 app = Flask(__name__)
-app.secret_key = 'spam-classifier-secret-key-change-in-production'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-only-change-in-production')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Allowed file extensions for upload
+ALLOWED_EXTENSIONS = {'.eml', '.txt', '.msg'}
 
 # Configuration
 MODEL_DIR = Path('models')
@@ -212,6 +217,31 @@ def get_classifier() -> Optional[EmailClassifier]:
         return None
 
 
+def allowed_file(filename: str) -> bool:
+    """Check if file extension is allowed."""
+    if not filename:
+        return False
+    ext = Path(filename).suffix.lower()
+    return ext in ALLOWED_EXTENSIONS
+
+
+def generate_csrf_token() -> str:
+    """Generate a CSRF token and store it in the session."""
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(32)
+    return session['csrf_token']
+
+
+def validate_csrf_token() -> bool:
+    """Validate the CSRF token from the form against the session."""
+    token = request.form.get('csrf_token', '')
+    return token and token == session.get('csrf_token')
+
+
+# Make csrf_token available in all templates
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
+
+
 # =============================================================================
 # Routes
 # =============================================================================
@@ -234,6 +264,11 @@ def upload():
     - Classify the email
     - Return results page
     """
+    # Validate CSRF token
+    if not validate_csrf_token():
+        flash('Invalid request. Please try again.', 'error')
+        return redirect(url_for('index'))
+
     if 'email_file' not in request.files:
         flash('No file uploaded', 'error')
         return redirect(url_for('index'))
@@ -242,6 +277,11 @@ def upload():
 
     if file.filename == '':
         flash('No file selected', 'error')
+        return redirect(url_for('index'))
+
+    # Validate file extension
+    if not allowed_file(file.filename):
+        flash('Invalid file type. Only .eml, .txt, and .msg files are allowed.', 'error')
         return redirect(url_for('index'))
 
     # Save to temporary file and parse
@@ -312,6 +352,11 @@ def label():
     - Generate unique filename
     - Save to appropriate directory
     """
+    # Validate CSRF token
+    if not validate_csrf_token():
+        flash('Invalid request. Please try again.', 'error')
+        return redirect(url_for('index'))
+
     label_value = request.form.get('label')
     email_content = request.form.get('email_content', '')
 
@@ -359,4 +404,4 @@ if __name__ == '__main__':
     HAM_DIR.mkdir(parents=True, exist_ok=True)
     SPAM_DIR.mkdir(parents=True, exist_ok=True)
 
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG', 'true').lower() == 'true')

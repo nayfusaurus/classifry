@@ -147,7 +147,8 @@
     </p>
 
     <form action="{{ url_for('label') }}" method="post">
-        <input type="hidden" name="email_content" value="{{ raw_body }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="email_content" value="{{ raw_body|e }}">
 
         <div class="label-buttons">
             <button type="submit" name="label" value="ham" class="btn btn-success">
