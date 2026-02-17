@@ -1,289 +1,164 @@
-# Classifry - Email Spam Classifier
+# Classifry
 
-A neural network-based email spam classifier built with PyTorch. This project includes both an educational Jupyter notebook for learning ML concepts and a practical command-line tool.
+[![CI](https://github.com/nayfusaurus/classifry/actions/workflows/build.yml/badge.svg)](https://github.com/nayfusaurus/classifry/actions/workflows/build.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+An email spam classifier powered by a PyTorch neural network. Classifry provides a CLI for training and inference, a Flask web app for reviewing and labeling emails, and a Jupyter notebook for learning the concepts behind it.
 
 ## Features
 
-- Deep learning email spam classifier using PyTorch
-- TF-IDF text vectorization
-- Interactive Jupyter notebook with detailed explanations
-- Command-line interface for training and classification
-- GPU support (CUDA) for faster training
-- Web interface for reviewing and labeling emails
-- Three-panel email analysis (rendered HTML, underlying source, classifier prediction)
-- Contribute to training dataset through manual labeling
+- **Neural network classifier** -- feedforward network with TF-IDF input, trained with early stopping
+- **CLI** -- train models, classify emails, and run an interactive REPL
+- **Web app** -- upload emails, view a three-panel breakdown (rendered HTML, underlying source, classifier prediction), and label them for retraining
+- **Jupyter notebook** -- step-by-step walkthrough of data loading, preprocessing, model building, and evaluation
 
 ## Requirements
 
-- Python 3.11 or higher
+- Python 3.11+
 - [uv](https://github.com/astral-sh/uv) package manager
 
-## Installation
+## Getting Started
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd classifry
-   ```
+```bash
+git clone https://github.com/nayfusaurus/classifry.git
+cd classifry
+uv sync
+```
 
-2. **Install dependencies**
-   ```bash
-   uv sync
-   ```
+Download the [Kaggle dataset](https://www.kaggle.com/datasets/sumit12100012/hamorspam-e-mail-detection-dataset) into the `email-data-set/` directory.
 
-3. Download Kaggle dataset into email-data-set folder.
-
-Kaggle dataset here: [Spam and Ham Dataset](https://www.kaggle.com/datasets/sumit12100012/hamorspam-e-mail-detection-dataset)
-
-## Quick Start
-
-### Train a Model
+### Train
 
 ```bash
 uv run python classifier.py train
 ```
 
-This will:
-- Load emails from `email-data-set/`
-- Train a neural network classifier
-- Save the model to `models/`
-
-### Classify an Email
+### Classify
 
 ```bash
-# Classify text directly
 uv run python classifier.py classify --text "Congratulations! You've won a free prize!"
-
-# Classify a file
 uv run python classifier.py classify path/to/email.txt
 ```
 
-### Interactive Mode
-
-```bash
-uv run python classifier.py interactive
-```
-
-Enter email text and get instant classification results.
-
-## Web Application
-
-The web application provides a visual interface for reviewing emails and contributing labels to the training dataset.
-
-### Starting the Server
+### Web App
 
 ```bash
 uv run python app.py
 ```
 
-The server starts on `http://localhost:5000` by default.
-
-### Environment Variables
+Open `http://localhost:5000`. Upload an email file to see the three-panel analysis, then label it as spam or ham to add it to the training dataset.
 
 | Variable | Default | Description |
-|----------|---------|-------------|
-| `FLASK_SECRET_KEY` | (random) | Secret key for session management |
-| `FLASK_DEBUG` | `False` | Enable debug mode for development |
+| --- | --- | --- |
+| `FLASK_SECRET_KEY` | dev fallback | Secret key for session management |
+| `FLASK_DEBUG` | `true` | Enable debug mode |
 
-Set environment variables before starting:
-```bash
-export FLASK_SECRET_KEY="your-secret-key"
-export FLASK_DEBUG=True
-uv run python app.py
+## Model
+
+```text
+Input (5000 TF-IDF features)
+  -> Dense(256) + ReLU + Dropout(0.3)
+  -> Dense(128) + ReLU + Dropout(0.3)
+  -> Dense(64)  + ReLU + Dropout(0.3)
+  -> Dense(1)   + Sigmoid
+Output (spam probability 0-1)
 ```
 
-### Workflow
+### Performance
 
-1. **Browse** - Navigate through emails in the dataset
-2. **Review** - View emails in three panels:
-   - **Rendered**: HTML content displayed as it would appear in an email client
-   - **Underlying**: Raw email source with headers and body
-   - **Classifier**: Model prediction with spam probability
-3. **Label** - Mark emails as spam or ham to contribute to the training dataset
-4. **Train** - Re-train the model with newly labeled data
+Evaluated on a held-out 20% split (752 emails total):
 
-## Learning with the Notebook
+| | Precision | Recall | F1 |
+| --- | --- | --- | --- |
+| Ham | 90% | 92% | 91% |
+| Spam | 96% | 95% | 95% |
 
-For a detailed walkthrough of how spam classification works:
-
-```bash
-uv run jupyter notebook spam_classifier_tutorial.ipynb
-```
-
-The notebook covers:
-1. **Data Loading** - Parsing raw email files
-2. **Text Preprocessing** - Cleaning HTML, removing special characters
-3. **Feature Engineering** - TF-IDF vectorization explained
-4. **Neural Networks** - Building a classifier from scratch
-5. **Training** - Loss functions, optimizers, and backpropagation
-6. **Evaluation** - Accuracy, precision, recall, and confusion matrices
+Overall accuracy: **94%**
 
 ## CLI Reference
 
-### Train Command
+### `train`
 
 ```bash
 uv run python classifier.py train [OPTIONS]
 ```
 
 | Option | Default | Description |
-|--------|---------|-------------|
-| `--data-dir` | `email-data-set` | Directory containing email data |
-| `--output-dir` | `models` | Directory to save trained model |
+| --- | --- | --- |
+| `--data-dir` | `email-data-set` | Training data directory |
+| `--output-dir` | `models` | Output directory for model artifacts |
 | `--epochs` | `50` | Maximum training epochs |
-| `--batch-size` | `32` | Training batch size |
+| `--batch-size` | `32` | Batch size |
 | `--lr` | `0.001` | Learning rate |
-| `--dropout` | `0.3` | Dropout rate for regularization |
+| `--dropout` | `0.3` | Dropout rate |
 | `--patience` | `10` | Early stopping patience |
 
-### Classify Command
+### `classify`
 
 ```bash
 uv run python classifier.py classify [FILE] [OPTIONS]
 ```
 
 | Option | Description |
-|--------|-------------|
-| `FILE` | Path to email file to classify |
-| `--text` | Email text to classify (instead of file) |
-| `--model-dir` | Directory containing trained model (default: `models`) |
+| --- | --- |
+| `FILE` | Path to an email file |
+| `--text` | Classify text directly instead of a file |
+| `--model-dir` | Model directory (default: `models`) |
 | `--threshold` | Classification threshold (default: `0.5`) |
 
-### Interactive Command
+### `interactive`
 
 ```bash
 uv run python classifier.py interactive [OPTIONS]
 ```
 
 | Option | Description |
-|--------|-------------|
-| `--model-dir` | Directory containing trained model (default: `models`) |
+| --- | --- |
+| `--model-dir` | Model directory (default: `models`) |
 | `--threshold` | Classification threshold (default: `0.5`) |
 
 ## Project Structure
 
-```
+```text
 classifry/
-├── pyproject.toml                  # Project dependencies (uv)
-├── classifier.py                   # Command-line tool
-├── app.py                          # Flask web application
-├── spam_classifier_tutorial.ipynb  # Educational notebook
-├── README.md                       # This file
-├── templates/                      # Jinja2 HTML templates
-│   └── *.html                      # Web interface templates
-├── tests/                          # Test suite
-│   └── test_*.py                   # Pytest test modules
-├── models/                         # Saved models (generated)
-│   ├── spam_classifier.pth         # PyTorch model weights
-│   └── tfidf_vectorizer.pkl        # TF-IDF vectorizer
-└── email-data-set/                 # Training data
-    ├── ham/
-    │   └── hard_ham/               # Legitimate emails
-    └── spam/
-        └── spam/                   # Spam emails
+├── classifier.py               # CLI and model code
+├── app.py                      # Flask web application
+├── spam_classifier_tutorial.ipynb
+├── templates/                  # Jinja2 templates
+├── tests/                      # pytest suite (118 tests)
+├── models/                     # Trained model artifacts
+└── email-data-set/             # Training data
 ```
 
-## Model Architecture
+## Testing
 
-```
-Input (5000 TF-IDF features)
-    │
-    ▼
-Dense(256) + ReLU + Dropout(0.3)
-    │
-    ▼
-Dense(128) + ReLU + Dropout(0.3)
-    │
-    ▼
-Dense(64) + ReLU + Dropout(0.3)
-    │
-    ▼
-Dense(1) + Sigmoid
-    │
-    ▼
-Output (spam probability 0-1)
+```bash
+uv run pytest
+uv run pytest -v        # verbose
 ```
 
-## Performance
-
-On the included dataset (752 emails):
-
-| Metric | Ham | Spam |
-|--------|-----|------|
-| Precision | 90% | 96% |
-| Recall | 92% | 95% |
-| F1-Score | 91% | 95% |
-
-**Overall Accuracy: 94%**
-
-## Dataset
-
-The project includes a sample dataset with:
-- **251 ham emails** (legitimate, "hard" examples)
-- **501 spam emails**
-
-Email files are raw RFC 822 format with headers and body.
+The test suite covers text preprocessing, model inference, Flask routes, CSRF protection, and email parsing.
 
 ## Customization
 
-### Using Your Own Data
+Organize custom training data as:
 
-Organize your emails in the following structure:
-```
+```text
 your-data/
 ├── ham/
-│   └── hard_ham/    # Put legitimate emails here
+│   └── hard_ham/
 └── spam/
-    └── spam/        # Put spam emails here
+    └── spam/
 ```
 
 Then train:
+
 ```bash
 uv run python classifier.py train --data-dir your-data
 ```
 
-### Adjusting the Model
-
-Edit `classifier.py` to modify:
-- `SpamClassifier` class for architecture changes
-- `clean_text()` function for preprocessing changes
-- TF-IDF parameters in `train_model()` function
-
-## Running Tests
-
-Run the test suite with pytest:
-
-```bash
-uv run pytest
-```
-
-For verbose output:
-
-```bash
-uv run pytest -v
-```
-
-### Test Coverage
-
-The tests cover:
-
-- **Web Application** (`test_app.py`): Flask routes, email rendering, labeling functionality
-- **Classifier** (`test_classifier.py`): Text preprocessing, model training, classification accuracy
-
-## Troubleshooting
-
-**"Model files not found"**
-- Run `uv run python classifier.py train` first to create a model
-
-**Low accuracy**
-- The dataset is small; try collecting more training data
-- Adjust dropout rate or learning rate
-- Increase `max_features` in TF-IDF vectorizer
-
-**CUDA out of memory**
-- Reduce batch size: `--batch-size 16`
-- Or use CPU by setting `CUDA_VISIBLE_DEVICES=""`
-
 ## License
 
-MIT License
+Licensed under the [Apache License 2.0](LICENSE).
