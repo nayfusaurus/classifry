@@ -1,7 +1,7 @@
 [project]
-name = "spam-or-ham-classifier"
+name = "classifry"
 version = "0.1.0"
-description = "Email spam/ham classifier using PyTorch neural networks"
+description = "Classifry - Email Spam Classifier powered by PyTorch neural networks"
 requires-python = ">=3.11"
 dependencies = [
     "torch>=2.0.0",

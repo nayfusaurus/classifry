@@ -1,10 +1,10 @@
-# Email Spam/Ham Classifier
+# Classifry - Email Spam Classifier
 
 A neural network-based email spam classifier built with PyTorch. This project includes both an educational Jupyter notebook for learning ML concepts and a practical command-line tool.
 
 ## Features
 
-- Deep learning spam classifier using PyTorch
+- Deep learning email spam classifier using PyTorch
 - TF-IDF text vectorization
 - Interactive Jupyter notebook with detailed explanations
 - Command-line interface for training and classification
@@ -23,7 +23,7 @@ A neural network-based email spam classifier built with PyTorch. This project in
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd spam-or-ham-classifier
+   cd classifry
    ```
 
 2. **Install dependencies**
@@ -163,7 +163,7 @@ uv run python classifier.py interactive [OPTIONS]
 ## Project Structure
 
 ```
-spam-or-ham-classifier/
+classifry/
 ├── pyproject.toml                  # Project dependencies (uv)
 ├── classifier.py                   # Command-line tool
 ├── app.py                          # Flask web application

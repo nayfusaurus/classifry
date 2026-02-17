@@ -1,4 +1,4 @@
-name: Spam Ham Classifier
+name: Classifry
 
 on:
   push:

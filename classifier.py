@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Email Spam/Ham Classifier
+Classifry - Email Spam Classifier
 
 A command-line tool for training and using a neural network spam classifier.
 
@@ -457,7 +457,7 @@ def cmd_interactive(args):
     classifier = EmailClassifier(Path(args.model_dir))
 
     print("\n" + "=" * 50)
-    print("Interactive Spam Classifier")
+    print("Classifry - Interactive Mode")
     print("=" * 50)
     print("Enter email text (end with an empty line) or 'quit' to exit.\n")
 
@@ -492,7 +492,7 @@ def cmd_interactive(args):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Email Spam/Ham Classifier',
+        description='Classifry - Email Spam Classifier',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__
     )

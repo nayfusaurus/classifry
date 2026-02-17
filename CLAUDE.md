@@ -4,7 +4,7 @@ This file provides context for Claude Code when working on this project.
 
 ## Project Overview
 
-This is an email spam/ham classifier using PyTorch neural networks. It's designed as both a learning tool (Jupyter notebook) and a practical command-line application.
+Classifry is an email spam classifier using PyTorch neural networks. It's designed as both a learning tool (Jupyter notebook) and a practical command-line/web application.
 
 ## Tech Stack
 
@@ -20,7 +20,7 @@ This is an email spam/ham classifier using PyTorch neural networks. It's designe
 ## Project Structure
 
 ```
-spam-or-ham-classifier/
+classifry/
 ├── pyproject.toml              # Dependencies managed by uv
 ├── classifier.py               # CLI tool for training and classification
 ├── app.py                      # Flask web app for email review/labeling
